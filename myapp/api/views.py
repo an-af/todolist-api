@@ -3,6 +3,10 @@ from django.http import JsonResponse
 import datetime
 from .  models import Task, Category
 from django.forms.models import model_to_dict
+from django.core.exceptions import ObjectDoesNotExist
+
+
+# -- Testing --
 def testing(request):
     time = datetime.datetime.now()
     try:
@@ -26,7 +30,7 @@ def allTask(request):
             'id' : item['id'],
             'title' : item['title'],
             'description' : item['description'],
-            "due_date"  : item["due_date"].isoformat() if item["due_date"] else None,
+            "due_date"  : item["due_date"].isoformat() if item["due_date"]  else None,
             "created_at"  : item["created_at"].isoformat(),
             "updated_at" : item["updated_at"].isoformat(),
             "category" : {
@@ -47,12 +51,34 @@ def allTask(request):
 def getTaskById(request, taskId):
     try:
         data = Task.objects.get(id = taskId)
-        print(model_to_dict(data.category))
+        # convert dictionary
         data = model_to_dict(data)
-        response = {"msg" : "getTaskByID() ok ", "data" : data}
+        # category
+        category_data = Category.objects.get(id = data['category'])
+        category_data = model_to_dict(category_data)
+
+        # formating data
+        formated_data = {
+            'id' : data['id'],
+            'title' : data['title'],
+            'description' : data['description'],
+            "due_date"  : data["due_date"].isoformat() if data["due_date"]  else None,
+            # "created_at"  : data["created_at"].isoformat(),
+            # "updated_at" : data["updated_at"].isoformat(),
+            "category" : {
+                "id" : category_data["id"],
+                "name" : category_data["name"],
+                "description" : category_data["description"]
+            }
+        }
+
+        response = {"data" : formated_data}
         return JsonResponse(response, status = 200)
+    except ObjectDoesNotExist as error:
+        response = {"error" : str(error)+" please try again.."}
+        return JsonResponse(response, status = 404)
     except Exception as error:
-        response = {"msg" : str(error)}
+        response = {"error" : str(error)}
         return JsonResponse(response, status = 500)
 
 # -- Category --
