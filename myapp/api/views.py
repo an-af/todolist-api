@@ -4,6 +4,7 @@ import datetime
 from .  models import Task, Category
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist
+from django.views.decorators.csrf import csrf_exempt
 
 
 # -- Testing --
@@ -47,36 +48,51 @@ def allTask(request):
     except Exception as error:
         response = {"msg" : str(error)}
         return JsonResponse(response, status=500)
-    
+
+@csrf_exempt   
 def getTaskById(request, taskId):
     try:
-        data = Task.objects.get(id = taskId)
-        # convert dictionary
-        data = model_to_dict(data)
-        # category
-        category_data = Category.objects.get(id = data['category'])
-        category_data = model_to_dict(category_data)
 
-        # formating data
-        formated_data = {
-            'id' : data['id'],
-            'title' : data['title'],
-            'description' : data['description'],
-            "due_date"  : data["due_date"].isoformat() if data["due_date"]  else None,
-            # "created_at"  : data["created_at"].isoformat(),
-            # "updated_at" : data["updated_at"].isoformat(),
-            "category" : {
-                "id" : category_data["id"],
-                "name" : category_data["name"],
-                "description" : category_data["description"]
+        # get data by id
+        if request.method == 'GET':
+            data = Task.objects.get(id = taskId)
+            # convert dictionary
+            data = model_to_dict(data)
+            # category
+            category_data = Category.objects.get(id = data['category'])
+            category_data = model_to_dict(category_data)
+
+            # formating data
+            formated_data = {
+                'id' : data['id'],
+                'title' : data['title'],
+                'description' : data['description'],
+                "due_date"  : data["due_date"].isoformat() if data["due_date"]  else None,
+                # "created_at"  : data["created_at"].isoformat(),
+                # "updated_at" : data["updated_at"].isoformat(),
+                "category" : {
+                    "id" : category_data["id"],
+                    "name" : category_data["name"],
+                    "description" : category_data["description"]
+                }
             }
-        }
 
-        response = {"data" : formated_data}
-        return JsonResponse(response, status = 200)
+            response = {"data" : formated_data}
+            return JsonResponse(response, status = 200)
+        
+        # delete data by id
+        if request.method == 'DELETE':
+            data = Task.objects.get(id = taskId)
+            data.delete()
+            response = {"msg" : "data delete success !"}
+            return JsonResponse(response, status = 200)
+    
+    # object not found exception
     except ObjectDoesNotExist as error:
         response = {"error" : str(error)+" please try again.."}
         return JsonResponse(response, status = 404)
+    
+    # another error from server
     except Exception as error:
         response = {"error" : str(error)}
         return JsonResponse(response, status = 500)
