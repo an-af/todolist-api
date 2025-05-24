@@ -116,12 +116,24 @@ def allCategory(request):
         }
         return JsonResponse(response, status = 500)
     
+
+    
+@csrf_exempt    
 def getCategoryById(request, categoryId):
     try:
-        data = Category.objects.get(id = categoryId)
-        data = model_to_dict(data)
-        response = {"data" : data}
-        return JsonResponse(response, status = 200)
+        # -- Get Category --
+        if request.method == 'GET':
+            data = Category.objects.get(id = categoryId)
+            data = model_to_dict(data)
+            response = {"data" : data}
+            return JsonResponse(response, status = 200)
+        
+        # -- del Category --
+        if request.method == 'DELETE':
+            data = Category.objects.get(id = categoryId)
+            data.delete()
+            response = {"msg" : "data success deleted !"}
+            return JsonResponse(response, status = 200)
     except ObjectDoesNotExist as error:
         response = {"msg" : str(error)+"please try again..."}
         return JsonResponse(response, status = 404)
