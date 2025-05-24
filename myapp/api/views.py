@@ -118,8 +118,13 @@ def allCategory(request):
     
 def getCategoryById(request, categoryId):
     try:
-        response = {"msg" : "getCategoryByID() ok ", "id" : categoryId}
+        data = Category.objects.get(id = categoryId)
+        data = model_to_dict(data)
+        response = {"data" : data}
         return JsonResponse(response, status = 200)
+    except ObjectDoesNotExist as error:
+        response = {"msg" : str(error)+"please try again..."}
+        return JsonResponse(response, status = 404)
     except Exception as error:
         response = {"msg" : str(error)}
         return JsonResponse(response, status = 500)
