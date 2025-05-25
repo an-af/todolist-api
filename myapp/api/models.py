@@ -7,6 +7,7 @@ class Task(models.Model):
     due_date = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_completed = models.BooleanField(default=False)
     category = models.ForeignKey('Category', on_delete=models.SET_NULL, blank=True, null=True, related_name="task")
 
     def __str__(self):
