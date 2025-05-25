@@ -98,17 +98,34 @@ def getTaskById(request, taskId):
         return JsonResponse(response, status = 500)
 
 # -- Category --
-
+@csrf_exempt
 def allCategory(request):
     try:
         date = datetime.datetime.now()
-        dateFormat = date.strftime("%d-%m-%Y")
-        data = Category.objects.all().values('name', 'description')
-        response = {
-            "time" : dateFormat,
-            "data" : list(data)
-        }
-        return JsonResponse(response, status = 200)
+        dateFormat = date.strftime("%d-%m-%Y | %H:%M WIB")
+
+        # == GET METHOD ==
+        if request.method == 'GET':
+            data = Category.objects.all().values('name', 'description')
+            response = {
+                "time" : dateFormat,
+                "data" : list(data)
+            }
+
+            return JsonResponse(response, status = 200)
+        
+        # == POST METHOD ==
+        if request.method == 'POST':
+            temp = json.loads(request.body.decode('utf-8'))
+            newData = Category(**temp)
+            newData.save()
+            response = {
+                "data" : temp,
+                "server-time" : dateFormat
+            }
+
+            return JsonResponse(response, status = 200)
+        
     except Exception as msg:
         response = {
             "datetime" : dateFormat,
@@ -121,6 +138,8 @@ def allCategory(request):
 @csrf_exempt    
 def getCategoryById(request, categoryId):
     try:
+        date = datetime.datetime.now()
+        dateFormat = date.strftime("%d-%m-%Y | %H:%M WIB")
         # -- Get Category --
         if request.method == 'GET':
             data = Category.objects.get(id = categoryId)
@@ -134,6 +153,22 @@ def getCategoryById(request, categoryId):
             data.delete()
             response = {"msg" : "data success deleted !"}
             return JsonResponse(response, status = 200)
+        
+        # == PATCH category ==
+        if request.method == 'PATCH':
+            response = {
+                "msg" : "Data updated !", 
+                "server-time": dateFormat
+            }
+            data = Category.objects.get(id = categoryId)
+            newData = json.loads(request.body.decode('UTF-8'))
+
+            data.name = newData['name']
+            data.description = newData['description']
+            data.save()
+
+            return JsonResponse(response, status = 200)
+
     except ObjectDoesNotExist as error:
         response = {"msg" : str(error)+"please try again..."}
         return JsonResponse(response, status = 404)
